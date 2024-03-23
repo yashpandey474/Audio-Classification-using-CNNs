@@ -4,19 +4,58 @@
 # Do not write import statements anywhere else
 import os
 import pandas as pd
+from preprocess import compute_mel_spectrogram, audio_preprocess, mono_to_color, apply_transform
+import torch
 
 TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "/home/pc/test_data"
 OUTPUT_CSV_ABSOLUTE_PATH = "/home/pc/output.csv"
 # The above two variables will be changed during testing. The current values are an example of what their contents would look like.
+class MyModel(nn.Module):
+    def __init__(self):
+        super(MyModel, self).__init__()
+        # Define your layers here
+        self.fc = nn.Linear(10, 2)  # Example linear layer
+
+    def forward(self, x):
+        # Define the forward pass
+        x = self.fc(x)
+        return x
+
+ # Instantiate the model
+model = MyModel()
+
+# Define the file path for the saved model weights
+model_weights_path = 'model_weights.pth'
+
+# Load the trained weights
+model.load_state_dict(torch.load(model_weights_path))
+
+# Set the model to evaluation mode
+model.eval()
 
 def evaluate(file_path):
     # Write your code to predict class for a single audio file instance here
-    return predicted_class
+
+    # COMPUTE THE MEL SPECTOGRAM FOR THE AUDIO [FUNCTION PREPROCESSES AUDIO BEFORE CONVERSION]
+    mel_spec = compute_mel_spectrogram(file_path)
+    
+    # CONVERT THE MEL SPECTOGRAM TO A 3-CHANNEL IMAGE
+    mel_spec = mono_to_color(mel_spec)
+
+    # APPLY TRANSFORMATIONS [CONVERTS TO TENSOR & OTHER TRANSFORMATIONS IF ANY]
+    mel_spec = apply_transform(mel_spec)
+
+    # PREDICT THE CLASS
+    with torch.no_grad():
+        output = model(mel_spec)
+        _, predicted = torch.max(output, 1) 
+
+    return predicted + 1
 
 
-def evaluate_batch(file_path_batch, batch_size=32):
-    # Write your code to predict class for a batch of audio file instances here
-    return predicted_class_batch
+# def evaluate_batch(file_path_batch, batch_size=32):
+#     # Write your code to predict class for a batch of audio file instances here
+#     return predicted_class_batch
 
 
 def test():
