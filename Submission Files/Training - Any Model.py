@@ -23,8 +23,6 @@ import copy
 from collections import Counter
 import cv2
 torch.cuda.empty_cache()
-
-
 #IMPORT ALL MODEL ARCHITECTURE
 from model_architectures import SimplifiedResNet, CNNModel, AttentionCNNModel
 
