@@ -23,8 +23,6 @@ import copy
 from collections import Counter
 import cv2
 torch.cuda.empty_cache()
-
-
 #IMPORT ALL MODEL ARCHITECTURE
 from model_architectures import SimplifiedResNet, CNNModel, AttentionCNNModel
 
@@ -195,15 +193,12 @@ exp_lr_scheduler =  lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 # %%
 model_ft = model_ft.to(device)
 
-# %%
 # [SimplifiedResNet] AUGMENTED [& ENSURED VAL HAS BEEN PREPROCESSED]
 model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
                        num_epochs=10)
 
-# %%
 save_model(model_ft, "SimpleResNetStepSchedule")
 
-# %%
 
 
 

@@ -19,14 +19,14 @@ hyper_params = {
 }
 
 transform = transforms.Compose([
-    # transforms.Resize((224, 224)),
-    transforms.ToTensor(),
+    transforms.ToTensor()
 ])
 
 def apply_transform(mel_spec):
     return transform(mel_spec)
 
 def audio_preprocess(file_path):
+    
     waveform, sample_rate = librosa.load(file_path, sr=44100)
 
     #normalising the waveform since each audio file has the amplitude values in different ranges

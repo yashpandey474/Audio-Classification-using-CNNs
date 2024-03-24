@@ -6,80 +6,69 @@ import os
 import pandas as pd
 from preprocess import compute_mel_spectrogram, audio_preprocess, mono_to_color, apply_transform
 import torch
+from model_architectures import SimplifiedResNet, AttentionCNN, CNNModel
+import numpy as np
 
-TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "/home/pc/test_data"
-OUTPUT_CSV_ABSOLUTE_PATH = "/home/pc/output.csv"
+
+TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "Project/val/Snare_drum"
+OUTPUT_CSV_ABSOLUTE_PATH = "Project-Clone/output.csv"
 # The above two variables will be changed during testing. The current values are an example of what their contents would look like.
-class MyModel(nn.Module):
-    def __init__(self):
-        super(MyModel, self).__init__()
-        # Define your layers here
-        self.fc = nn.Linear(10, 2)  # Example linear layer
-
-    def forward(self, x):
-        # Define the forward pass
-        x = self.fc(x)
-        return x
-
  # Instantiate the model
-model = MyModel()
+input_shape = (128, 345, 3)
+num_classes = 13   
+model_architecture1 = AttentionCNN(num_classes)
 
 # Define the file path for the saved model weights
-model_weights_path = 'model_weights.pth'
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the path relative to the current directory
+model_weights_path = os.path.join(current_dir, 'AttentionCNN.pth')
 
 # Load the trained weights
-model.load_state_dict(torch.load(model_weights_path))
+model_architecture1.load_state_dict(torch.load(model_weights_path))
 
 # Set the model to evaluation mode
-model.eval()
+model_architecture1.eval()
 
-def evaluate(file_path):
+def evaluate(file_path, model):
+    print("EVALUATING: ", file_path)
     # Write your code to predict class for a single audio file instance here
-
-    # COMPUTE THE MEL SPECTOGRAM FOR THE AUDIO [FUNCTION PREPROCESSES AUDIO BEFORE CONVERSION]
-    mel_spec = compute_mel_spectrogram(file_path)
     
-    # CONVERT THE MEL SPECTOGRAM TO A 3-CHANNEL IMAGE
-    mel_spec = mono_to_color(mel_spec)
+    # COMPUTE THE MEL SPECTOGRAM FOR THE AUDIO [FUNCTION PREPROCESSES AUDIO BEFORE CONVERSION]
+    # mel_spec = compute_mel_spectrogram(file_path)
+    
+    # # CONVERT THE MEL SPECTOGRAM TO A 3-CHANNEL IMAGE
+    # mel_spec = mono_to_color(mel_spec)
 
+
+    # ONLY FOR OUR TESTING [REMOVE BEFORE SUBMISSION]
+    mel_spec = np.load(file_path)['mel_spec']
+    
     # APPLY TRANSFORMATIONS [CONVERTS TO TENSOR & OTHER TRANSFORMATIONS IF ANY]
-    mel_spec = apply_transform(mel_spec)
+    mel_spec = apply_transform(mel_spec).unsqueeze(0)
 
     # PREDICT THE CLASS
     with torch.no_grad():
         output = model(mel_spec)
         _, predicted = torch.max(output, 1) 
 
-    return predicted + 1
-
-
-# def evaluate_batch(file_path_batch, batch_size=32):
-#     # Write your code to predict class for a batch of audio file instances here
-#     return predicted_class_batch
-
+    return predicted.item() + 1
 
 def test():
     filenames = []
     predictions = []
-    for file_path in os.path.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH):
-        prediction = evaluate(file_path)
+    for file_path in os.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH):
+        # TO USE ARCHITECTURE - 1
+        prediction = evaluate(os.path.join(TEST_DATA_DIRECTORY_ABSOLUTE_PATH, file_path), model_architecture1)
 
+        # TO USE ARCHITECTURE - 2
+        # prediction = evaluate(os.path.join(TEST_DATA_DIRECTORY_ABSOLUTE_PATH, file_path), model_architecture2)
         filenames.append(file_path)
         predictions.append(prediction)
-    pd.DataFrame({"filename": filenames, "pred": predictions}).to_csv(OUTPUT_CSV_ABSOLUTE_PATH, index=False)
 
-
-def test_batch(batch_size=32):
-    filenames = []
-    predictions = []
-
-    paths = os.path.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH)
-    
-    # Iterate over the batches
-    # For each batch, execute evaluate_batch function & append the filenames for that batch in the filenames list and the corresponding predictions in the predictions list.
     pd.DataFrame({"filename": filenames, "pred": predictions}).to_csv(OUTPUT_CSV_ABSOLUTE_PATH, index=False)
 
 
 # Uncomment exactly one of the two lines below, i.e. either execute test() or test_batch()
-# test()
+test()
 # test_batch()
