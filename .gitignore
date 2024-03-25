@@ -1,3 +1,4 @@
 .ipynb_checkpoints
 Model/
 Submission Files/AttentionCNN.pth
+Submission Files/simplifiedResNet_25epoch_weights.pth

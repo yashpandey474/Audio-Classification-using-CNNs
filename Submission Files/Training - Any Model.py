@@ -16,6 +16,9 @@ from preprocess import compute_mel_spectrogram
 import cv2
 
 
+#NOTE: WE HAVE IMPORTED BOTH THE MODEL ARCHITECTURES AND YOU CAN UNCOMMENT THE SECOND MODEL ARCHITECTURE INSTANTIATION TO TRAIN THAT MODEL
+#NOTE: CURRENTLY, THIS FILE TRAINS THE FIRST MODEL ARCHITECTURE - SIMPLIFIED RESNET FOR 25 EPOCHS
+
 # %%
 class MelSpecDataset(Dataset):
     def __init__(self, directory, class_mapping, transform):
@@ -36,19 +39,17 @@ class MelSpecDataset(Dataset):
                 if audio_file == "Laughter_284.flac":
                   continue
                 audio_path = os.path.join(class_dir, audio_file)
-                print(audio_path)
-
-                #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
-                mel_spec = compute_mel_spectrogram(audio_path)
-                mel_spec = self.transform(mel_spec)
-                self.data.append((mel_spec, class_label))
+                self.data.append((audio_path, class_label))
                 self.class_data[class_name] += 1
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        mel_spec, class_label = self.data[idx]
+        audio_path, class_label = self.data[idx]
+        #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
+        mel_spec = compute_mel_spectrogram(audio_path)
+        mel_spec = self.transform(mel_spec)
         return mel_spec, class_label - 1
 
 # NO NEED FOR RESIZING AS MODELS DYNAMICALLY CALCULATE SIZE OF FULLY CONNECTED LAYERS BASED ON INPUT SIZE

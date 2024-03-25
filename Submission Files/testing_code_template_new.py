@@ -10,19 +10,23 @@ from model_architectures import SimplifiedResNet, AttentionCNN, CNNModel
 import numpy as np
 
 
-TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "Project/val/Snare_drum"
+TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "/home/pc/test_data"
+OUTPUT_CSV_ABSOLUTE_PATH = "/home/pc/output.csv"
+# The above two variables will be changed during testing. The current values are an example of what their contents would look like.
+
+TEST_DATA_DIRECTORY_ABSOLUTE_PATH = "Project/val/Guitar"
 OUTPUT_CSV_ABSOLUTE_PATH = "Project-Clone/output.csv"
 # The above two variables will be changed during testing. The current values are an example of what their contents would look like.
  # Instantiate the model
 input_shape = (128, 345, 3)
 num_classes = 13   
-model_architecture1 = AttentionCNN(num_classes)
+model_architecture1 = SimplifiedResNet(input_shape, num_classes)
 
 # Define the file path for the saved model weights
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Define the path relative to the current directory
-model_weights_path = os.path.join(current_dir, 'AttentionCNN.pth')
+model_weights_path = os.path.join(current_dir, 'simplifiedResNet_25epoch_weights.pth')
 
 # Load the trained weights
 model_architecture1.load_state_dict(torch.load(model_weights_path))
@@ -31,6 +35,7 @@ model_architecture1.load_state_dict(torch.load(model_weights_path))
 model_architecture1.eval()
 
 def evaluate(file_path, model):
+    # Write your code to predict class for a single audio file instance here
     print("EVALUATING: ", file_path)
     # Write your code to predict class for a single audio file instance here
     
@@ -54,19 +59,27 @@ def evaluate(file_path, model):
 
     return predicted.item() + 1
 
+
+
 def test():
     filenames = []
     predictions = []
-    for file_path in os.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH):
-        # TO USE ARCHITECTURE - 1
-        prediction = evaluate(os.path.join(TEST_DATA_DIRECTORY_ABSOLUTE_PATH, file_path), model_architecture1)
+    # for file_path in os.path.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH):
+    for file_name in os.listdir(TEST_DATA_DIRECTORY_ABSOLUTE_PATH):
+        # prediction = evaluate(file_path)
+        absolute_file_name = os.path.join(TEST_DATA_DIRECTORY_ABSOLUTE_PATH, file_name)
+        
+        prediction = evaluate(absolute_file_name, model_architecture1)
 
-        # TO USE ARCHITECTURE - 2
-        # prediction = evaluate(os.path.join(TEST_DATA_DIRECTORY_ABSOLUTE_PATH, file_path), model_architecture2)
-        filenames.append(file_path)
+        #UNCOMMENT TO TEST THE SECOND MODEL ARCHITECTURE
+        # prediction = evaluate(absolute_file_name, model_architecture2)
+
+
+        filenames.append(absolute_file_name)
         predictions.append(prediction)
-
     pd.DataFrame({"filename": filenames, "pred": predictions}).to_csv(OUTPUT_CSV_ABSOLUTE_PATH, index=False)
+
+
 
 
 # Uncomment exactly one of the two lines below, i.e. either execute test() or test_batch()
