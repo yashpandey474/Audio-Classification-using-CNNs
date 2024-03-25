@@ -33,7 +33,10 @@ class MelSpecDataset(Dataset):
 
             class_label = self.class_mapping[class_name]  # Map class name to numerical label
             for audio_file in os.listdir(class_dir):
+                if audio_file == "Laughter_284.flac":
+                  continue
                 audio_path = os.path.join(class_dir, audio_file)
+                print(audio_path)
 
                 #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
                 mel_spec = compute_mel_spectrogram(audio_path)
@@ -173,8 +176,10 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 input_shape = (128, 345, 3)
 num_classes = 13  # Assuming 14 output classes
 
-# Instantiate the model
+# Instantiate the model [UNCOMMENT IF WANT TO TRAIN ANOTHER MODEL]
 model_ft = SimplifiedResNet(input_shape, num_classes)
+# model_ft = AttentionCNN(num_classes)
+
 criterion = nn.CrossEntropyLoss()
 optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
