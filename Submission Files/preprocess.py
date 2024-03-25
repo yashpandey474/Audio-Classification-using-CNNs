@@ -50,6 +50,15 @@ def audio_preprocess(file_path):
 
     return waveform, sample_rate
 
+def mono_to_color(X):
+    # Convert single-channel image to three channels
+    color_img = cv2.cvtColor(X, cv2.COLOR_GRAY2BGR)
+
+    # Normalize pixel values to the range [0, 255]
+    normalized_img = cv2.normalize(color_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+
+    return normalized_img
+
 def compute_mel_spectrogram(audio_file_path, n_fft=2048, hop_length=512, n_mels=128):
     # Load the audio file
     y, sr = audio_preprocess(audio_file_path)
@@ -59,14 +68,8 @@ def compute_mel_spectrogram(audio_file_path, n_fft=2048, hop_length=512, n_mels=
     mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
     mel_spec_db = mel_spec_db.astype(np.float32)
 
+    mel_spec_db = mono_to_color(mel_spec_db)
+    
     return mel_spec_db
 
 
-def mono_to_color(X):
-    # Convert single-channel image to three channels
-    color_img = cv2.cvtColor(X, cv2.COLOR_GRAY2BGR)
-
-    # Normalize pixel values to the range [0, 255]
-    normalized_img = cv2.normalize(color_img, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-
-    return normalized_img

@@ -1,30 +1,20 @@
 # %%
 import numpy as np
 import os
-import tensorflow as tf
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchvision import datasets, models, transforms
-import torch.nn.init as init
-import matplotlib.pyplot as plt
-from IPython.display import Audio
-import librosa.display
-import librosa
-import zipfile
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from torchvision import datasets, models, transforms
+from torchvision import datasets,  transforms
 from torch.optim import lr_scheduler
 import time
-from PIL import Image
 import copy
-from collections import Counter
-import cv2
 torch.cuda.empty_cache()
 #IMPORT ALL MODEL ARCHITECTURE
-from model_architectures import SimplifiedResNet, CNNModel, AttentionCNNModel
+from model_architectures import SimplifiedResNet, CNNModel, AttentionCNN
+from preprocess import compute_mel_spectrogram
+import cv2
+
 
 # %%
 class MelSpecDataset(Dataset):
@@ -40,22 +30,24 @@ class MelSpecDataset(Dataset):
             self.class_data[class_name] = 0
             if not os.path.isdir(class_dir):
                 continue
+
             class_label = self.class_mapping[class_name]  # Map class name to numerical label
-            for npz_file in os.listdir(class_dir):
-                npz_path = os.path.join(class_dir, npz_file)
-                self.data.append((npz_path, class_label))
+            for audio_file in os.listdir(class_dir):
+                audio_path = os.path.join(class_dir, audio_file)
+
+                #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
+                mel_spec = compute_mel_spectrogram(audio_path)
+                mel_spec = self.transform(mel_spec)
+                self.data.append((mel_spec, class_label))
                 self.class_data[class_name] += 1
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        npz_path, class_label = self.data[idx]
-        mel_spec = np.load(npz_path)['mel_spec']  # Assuming 'mel_spec' is the key for the mel spectrogram array
-        mel_spec = self.transform(mel_spec)  # Apply the transform to the data
+        mel_spec, class_label = self.data[idx]
         return mel_spec, class_label - 1
 
-# %%
 # NO NEED FOR RESIZING AS MODELS DYNAMICALLY CALCULATE SIZE OF FULLY CONNECTED LAYERS BASED ON INPUT SIZE
 # AND ALL SPECTROMGRAMS ARE OF SAME SIZE
 transform = transforms.Compose([
@@ -80,9 +72,9 @@ class_mapping = {
     'Splash_and_splatter': 13
 }
 
-# Define the directories
-train_directory = "train"
-val_directory = "val"
+# Define the directories [WHERE YOUR AUDIO FILES FOR TRAINING AND VALIDATING ARE STORED]
+train_directory = "Project/train"
+val_directory =  "Project/val"
 
 # Create datasets
 train_dataset = MelSpecDataset(train_directory, class_mapping, transform)
