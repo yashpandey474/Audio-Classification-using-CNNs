@@ -24,6 +24,11 @@ hyper_params = {
     'fmax': sample_rate//2
 }
 
+input_folder = "/content/drive/My Drive/audio_dataset/audio_dataset/train"
+output_folder = "/content/drive/My Drive/audio_dataset/audio_dataset/train"
+
+
+
 def apply_audio_augmentation(audio, sample_rate, augmentation_type):
     # Load the audio file
     if augmentation_type == "time_shift":
@@ -80,8 +85,11 @@ def augment_audio(input_path, output_path, max_samples=800):
                   continue
 
                 # Load the audio file
-                audio_path = os.path.join(class_path, file_name)
-                waveform, sample_rate = librosa.load(audio_path, sr=44100)
+                try:
+                    audio_path = os.path.join(class_path, file_name)
+                    waveform, sample_rate = librosa.load(audio_path, sr=44100)
+                except:
+                    continue
 
                 # Determine the number of augmentations for this file
                 augmentations_for_this_file = augmentation_factor_per_file
@@ -107,9 +115,9 @@ def augment_audio(input_path, output_path, max_samples=800):
 
             # print(class_folder, augmentation_factor_per_file, additional_files_needed, num_files, count)
 
-input_folder = "/content/drive/My Drive/audio_dataset/audio_dataset/train"
-output_folder = "/content/drive/My Drive/DLproject-Numpy/augmented_audios_final"
 
-augment_audio(input_folder, output_folder)
+
+#NOTE: UNCOMMENT THIS TO AUGMENT THE AUDIO
+# augment_audio(input_folder, output_folder)
 
 

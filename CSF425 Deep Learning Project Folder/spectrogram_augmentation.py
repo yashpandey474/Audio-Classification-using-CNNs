@@ -6,7 +6,6 @@ import torchaudio.transforms as T
 import torchvision.io as io
 import torchaudio
 import numpy as np
-from google.colab import drive
 import matplotlib.pyplot as plt
 import numpy as np
 import librosa
@@ -14,7 +13,12 @@ import soundfile as sf
 from pydub import AudioSegment
 from pydub.effects import strip_silence
 import random
-drive.mount('/content/drive')
+
+
+input_folder = '/content/drive/My Drive/DLproject-Numpy/train'
+output_folder = '/content/drive/My Drive/DLproject-Numpy/train'
+
+
 
 # %%
 def augment_spectrograms(data_dir, output_dir, max_samples = 1000, time_mask_param = 80,
@@ -67,13 +71,11 @@ def augment_spectrograms(data_dir, output_dir, max_samples = 1000, time_mask_par
             # print(f"CLASS: {class_folder} COUNT: {count}\n")
 
 # %%
-# Define directory paths
-data_dir = '/content/drive/My Drive/DLproject-Numpy/train'
-output_dir = '/content/drive/My Drive/DLproject-Numpy/augmented_spectograms'
 
-# Create output directory if it doesn't exist
-os.makedirs(output_dir, exist_ok=True)
+                
+#NOTE: UNCOMMENT THESE LINES TO RUN AUGMENTATION
+# os.makedirs(output_folder, exist_ok=True)
 
-augment_spectrograms(data_dir, output_dir)
+# augment_spectrograms(input_folder, output_folder)
 
 

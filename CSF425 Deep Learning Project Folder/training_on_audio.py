@@ -11,15 +11,20 @@ import time
 import copy
 torch.cuda.empty_cache()
 #IMPORT ALL MODEL ARCHITECTURE
-from model_architectures import SimplifiedResNet, CNNModel, AttentionCNN
+from model_architectures import SimplifiedResNet, CNNModel, AttentionCNN, VGGish
 from preprocess import compute_mel_spectrogram
 import cv2
+import librosa
+import subprocess
 
 
 #NOTE: WE HAVE IMPORTED BOTH THE MODEL ARCHITECTURES AND YOU CAN UNCOMMENT THE SECOND MODEL ARCHITECTURE INSTANTIATION TO TRAIN THAT MODEL
 #NOTE: CURRENTLY, THIS FILE TRAINS THE FIRST MODEL ARCHITECTURE - SIMPLIFIED RESNET FOR 25 EPOCHS
+import warnings
 
-# %%
+# Filter out all warnings
+warnings.filterwarnings("ignore")
+
 class MelSpecDataset(Dataset):
     def __init__(self, directory, class_mapping, transform):
         self.directory = directory
@@ -36,69 +41,29 @@ class MelSpecDataset(Dataset):
 
             class_label = self.class_mapping[class_name]  # Map class name to numerical label
             for audio_file in os.listdir(class_dir):
-                if audio_file == "Laughter_284.flac":
-                  continue
                 audio_path = os.path.join(class_dir, audio_file)
-                self.data.append((audio_path, class_label))
-                self.class_data[class_name] += 1
 
+                mel_spec = torch.zeros((128, 345, 3))
+                
+                #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
+                try:
+                    mel_spec = compute_mel_spectrogram(audio_path)
+                    mel_spec = self.transform(mel_spec)
+                    
+                except:
+                    print("ERROR FOR: ", audio_file)
+                    continue
+
+                self.data.append((mel_spec, class_label))
+                self.class_data[class_name] += 1
     def __len__(self):
         return len(self.data)
+    
 
     def __getitem__(self, idx):
-        audio_path, class_label = self.data[idx]
-        #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
-        mel_spec = compute_mel_spectrogram(audio_path)
-        mel_spec = self.transform(mel_spec)
+        mel_spec, class_label = self.data[idx]
         return mel_spec, class_label - 1
 
-# NO NEED FOR RESIZING AS MODELS DYNAMICALLY CALCULATE SIZE OF FULLY CONNECTED LAYERS BASED ON INPUT SIZE
-# AND ALL SPECTROMGRAMS ARE OF SAME SIZE
-transform = transforms.Compose([
-    transforms.ToTensor(),            # Convert images to tensors
-])
-
-
-# Define the mapping from class names to class indices
-class_mapping = {
-    'car_horn': 1,
-    'dog_barking': 2,
-    'drilling': 3,
-    'Fart': 4,
-    'Guitar': 5,
-    'Gunshot_and_gunfire': 6,
-    'Hi-hat': 7,
-    'Knock': 8,
-    'Laughter': 9,
-    'Shatter': 10,
-    'siren': 11,
-    'Snare_drum': 12,
-    'Splash_and_splatter': 13
-}
-
-# Define the directories [WHERE YOUR AUDIO FILES FOR TRAINING AND VALIDATING ARE STORED]
-train_directory = "Project/train"
-val_directory =  "Project/val"
-
-# Create datasets
-train_dataset = MelSpecDataset(train_directory, class_mapping, transform)
-val_dataset = MelSpecDataset(val_directory, class_mapping, transform)
-
-# Create dataloaders
-train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
-val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=2)
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-datasets = {"train": train_dataset, "val": val_dataset}
-dataloaders = {"train": train_dataloader, "val": val_dataloader}
-dataset_sizes = {x: len(datasets[x]) for x in ['train', 'val']}
-
-
-
-
-# %%
 def save_model(model, model_name):
   torch.save(model.state_dict(), f'{model_name}_weights.pth')
   torch.save(model, f'{model_name}.pth')
@@ -172,30 +137,80 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     model.load_state_dict(best_model_wts)
     return model
 
-# %%
-# Define input shape and number of classes
-input_shape = (128, 345, 3)
-num_classes = 13  # Assuming 14 output classes
 
-# Instantiate the model [UNCOMMENT IF WANT TO TRAIN ANOTHER MODEL]
-model_ft = SimplifiedResNet(input_shape, num_classes)
-# model_ft = AttentionCNN(num_classes)
-
-criterion = nn.CrossEntropyLoss()
-optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
+# NO NEED FOR RESIZING AS MODELS DYNAMICALLY CALCULATE SIZE OF FULLY CONNECTED LAYERS BASED ON INPUT SIZE
+# AND ALL SPECTROMGRAMS ARE OF SAME SIZE
+transform = transforms.Compose([
+    transforms.ToTensor(),            # Convert images to tensors
+])
 
 
-#DIFFERENT SCHEDULER THIS TIME
-exp_lr_scheduler =  lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+# Define the mapping from class names to class indices
+class_mapping = {
+    'car_horn': 1,
+    'dog_barking': 2,
+    'drilling': 3,
+    'Fart': 4,
+    'Guitar': 5,
+    'Gunshot_and_gunfire': 6,
+    'Hi-hat': 7,
+    'Knock': 8,
+    'Laughter': 9,
+    'Shatter': 10,
+    'siren': 11,
+    'Snare_drum': 12,
+    'Splash_and_splatter': 13
+}
 
-# %%
-model_ft = model_ft.to(device)
+if __name__ == '__main__':
+    # Define the directories [WHERE YOUR AUDIO FILES FOR TRAINING AND VALIDATING ARE STORED]
+    train_directory = r"D:\audio dataset\audio_dataset\train"
+    val_directory =  r"D:\audio dataset\audio_dataset\val"
 
-# [SimplifiedResNet] AUGMENTED [& ENSURED VAL HAS BEEN PREPROCESSED]
-model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=10)
+    # Create datasets
+    print("converting audio files to mel spectograms")
+    train_dataset = MelSpecDataset(train_directory, class_mapping, transform)
+    val_dataset = MelSpecDataset(val_directory, class_mapping, transform)
 
-save_model(model_ft, "SimpleResNetStepSchedule")
+    # Create dataloaders
+    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=2)
+    val_dataloader = DataLoader(val_dataset, batch_size=64, shuffle=False, num_workers=2)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+    datasets = {"train": train_dataset, "val": val_dataset}
+    dataloaders = {"train": train_dataloader, "val": val_dataloader}
+    dataset_sizes = {x: len(datasets[x]) for x in ['train', 'val']}
+
+
+    # %%
+    # Define input shape and number of classes
+    input_shape = (128, 345, 3)
+    num_classes = 13  # Assuming 14 output classes
+
+    # Instantiate the model [UNCOMMENT IF WANT TO TRAIN ANOTHER MODEL]
+    model_ft = SimplifiedResNet(input_shape, num_classes)
+
+    # UNCOMMENT THIS TO TRAIN SECOND ARCHITECTURE
+    # model_ft = VGGish(num_classes)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
+
+
+    #DIFFERENT SCHEDULER THIS TIME
+    exp_lr_scheduler =  lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
+
+    # %%
+    model_ft = model_ft.to(device)
+
+    # [SimplifiedResNet] AUGMENTED [& ENSURED VAL HAS BEEN PREPROCESSED]
+    model_ft = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
+                           num_epochs=10)
+
+    save_model(model_ft, "SimpleResNet")
+
 
 
 

@@ -15,3 +15,5 @@ torchaudio
 torchvision
 opencv-python
 setuptools
+ffmpeg-python
+audioread

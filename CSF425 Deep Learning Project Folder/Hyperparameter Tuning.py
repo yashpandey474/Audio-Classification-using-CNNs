@@ -22,6 +22,8 @@ from PIL import Image
 import copy
 from collections import Counter
 import cv2
+import optuna
+from model_architectures import SimplifiedResNet, VGGish, AttentionCNN
 torch.cuda.empty_cache()
 
 # %%
@@ -38,21 +40,32 @@ class MelSpecDataset(Dataset):
             self.class_data[class_name] = 0
             if not os.path.isdir(class_dir):
                 continue
-            class_label = self.class_mapping[class_name]  # Map class name to numerical label
-            for npz_file in os.listdir(class_dir):
-                npz_path = os.path.join(class_dir, npz_file)
-                self.data.append((npz_path, class_label))
-                self.class_data[class_name] += 1
 
+            class_label = self.class_mapping[class_name]  # Map class name to numerical label
+            for audio_file in os.listdir(class_dir):
+                audio_path = os.path.join(class_dir, audio_file)
+
+                mel_spec = torch.zeros((128, 345, 3))
+                
+                #NOTE: THIS FUNCTION CALLS AUDIO PREPROCESS, COMPUTES SPECTROGRAM AND CONVERTS TO 3 CHANNEL
+                try:
+                    mel_spec = compute_mel_spectrogram(audio_path)
+                    mel_spec = self.transform(mel_spec)
+                    
+                except:
+                    print("ERROR FOR: ", audio_file)
+                    continue
+
+                self.data.append((mel_spec, class_label))
+                self.class_data[class_name] += 1
     def __len__(self):
         return len(self.data)
+    
 
     def __getitem__(self, idx):
-        npz_path, class_label = self.data[idx]
-        mel_spec = np.load(npz_path)['mel_spec']  # Assuming 'mel_spec' is the key for the mel spectrogram array
-        mel_spec = self.transform(mel_spec)  # Apply the transform to the data
+        mel_spec, class_label = self.data[idx]
         return mel_spec, class_label - 1
-
+    
 # %%
 transform = transforms.Compose([
     # transforms.Resize((224, 224)),  # Optionally resize images
@@ -150,7 +163,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     return model
 
 # %%
-import optuna
+
 input_shape = (128, 345, 3)
 num_classes = 13  # Assuming 14 output classes
 

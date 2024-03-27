@@ -2,11 +2,9 @@
 import os
 import numpy as np
 import librosa
-from google.colab import drive
 import matplotlib.pyplot as plt
 from PIL import Image
 import cv2
-drive.mount('/content/drive')
 
 # HYPERPARAMETERS
 duration_seconds = 4
@@ -90,7 +88,6 @@ def process_label_folder(label_directory, output_label_directory):
             # Convert to 3 channels [Better for inputting to CNN model]
             mel_spec = mono_to_color(mel_spec)
 
-            print(mel_spec.shape)
 
             output_npz_path = os.path.join(output_label_directory, os.path.splitext(audio_file)[0] + '.npz')
             np.savez(output_npz_path, mel_spec=mel_spec)
@@ -105,7 +102,7 @@ def process_label_folder(label_directory, output_label_directory):
 # %%
 def process_audio_dataset(root_directory, output_directory):
     # Loop through 'train' and 'val' subfolders
-    for subfolder in ["val"]:
+    for subfolder in ["train", "val"]:
         subfolder_directory = os.path.join(root_directory, subfolder)
 
         # Loop through each label folder in the 'train' or 'val' subfolder
@@ -136,5 +133,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # NOTE: UNCOMMENT TO CREATE SPECTROGRAMS FROM AUDIOS IN ROOT DIRECTORY TO OUTPUT DIRECTORY
+    # main()
+    pass
 
