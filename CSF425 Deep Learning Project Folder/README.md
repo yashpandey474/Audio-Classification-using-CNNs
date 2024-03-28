@@ -15,10 +15,10 @@ File for augmenting spectograms (2nd step of augmenting, after augmenting audios
 For running the testing_code_template.py file, kindly follow the steps below
 
 1. Change directory to the project folder
-```cd DLProject-folder```
+```cd CSF425 Deep Learning Project Folder```
 
 2. Install dependencies using requirements.txt
-pip install -r requirements.txt
+```pip install -r requirements.txt```
 
 3. Set the TEST_DATA_DIRECTORY_ABSOLUTE_PATH & OUTPUT_CSV_ABSOLUTE_PATH variables to absolute paths of test directory and where you want the output.csv to be created
 
