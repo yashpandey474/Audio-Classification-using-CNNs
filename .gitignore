@@ -1,1 +1,9 @@
 .ipynb_checkpoints
+Model/
+CSF425 Deep Learning Project Folder/AttentionCNN3.pth
+CSF425 Deep Learning Project Folder/VGGish_90_weights.pth
+CSF425 Deep Learning Project Folder/simplifiedResNet_25epoch_weights.pth
+DLProject.zip
+DLProject1.zip
+CSF425 Deep Learning Project Folder.zip
+.DS_Store
