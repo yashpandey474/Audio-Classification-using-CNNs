@@ -1,6 +1,23 @@
-# CSF425 Deep Learning Project
+# Audio Classification using Convolutional Neural Networks
+A project to classify audio belonging to 13 different classes using a convolutional neural network (CNN). This project was built as part of our CSF425 Deep Learning course and our team obtained the highest accuracy of 89% on a held-out test set.
 
-## Description
+# Project Description
+We have experimented with various types of CNN architectures such as ResNet-based CNNs, LSTM-based CNNs, Attention-based CNNs and VGGish for classifying audios belonging to 13 different classes.
+We were provided with a dataset within which we noticed the following problems:
+1. Class imbalance
+2. Different formats of audio
+3. Varying degrees of background noise
+4. Different length of audio files
+
+We have conducted the following major experiments:
+1. Data augmentation to correct the class imbalance by setting a 'per-file-augmentation-factor' and then randomly selecting files for augmentations.
+2. Trimmed & normalised the audio files to bring them to a common format.
+3. Trained different architectures and evaluated their classification metrics with respect to each class along with overall performance in terms of precision, recall and accuracy.
+4. Conducted hyperparameter optimisation experiments on our chosen, ResNet CNN
+5. Compared results with respect to training on augmeneted data versus training on non-augmented data, using ResNet CNN
+
+# Running the project
+The submission file folder contains code that can be used for testing the trained models.
 
 File for testing: testing_code_template_new.py
 File for training: training_plus_augmentation.py
